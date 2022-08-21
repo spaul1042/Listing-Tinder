@@ -4,7 +4,7 @@ const express = require("express");
 // We use it to define our routes.
 // The router will be added as a middleware and will take control of requests starting with path /listings.
 const recordRoutes = express.Router();
-
+const dbo = require("../db/conn");
 // Route 1 when /listing api is called with get request, corresponding function is called
 //This section will help you get a list of all the documents.
 recordRoutes.route("/listings").get(async function (req, res) {
@@ -13,7 +13,7 @@ recordRoutes.route("/listings").get(async function (req, res) {
   dbConnect
     .collection("listingsAndReviews")
     .find({})
-    .limit(50)
+    .limit(10)
     .toArray(function (err, result) {
       if (err) {
         res.status(400).send("Error fetching listings!");
@@ -51,7 +51,8 @@ recordRoutes.route("/listings/recordSwipe").post(function (req, res) {
 recordRoutes.route("/listings/updateLike").post(function (req, res) {
   const dbConnect = dbo.getDb();
   const listingQuery = { _id: req.body.id };
-  const updates = {
+
+  let updates = {
     $inc: {
       likes: 1,
     },
@@ -78,18 +79,20 @@ recordRoutes.route("/listings/updateLike").post(function (req, res) {
 // Route 4 when /listing/delete/:id api is called with post request, corresponding function is called
 // This section will help you delete a record.
 recordRoutes.route("/listings/delete/:id").delete((req, res) => {
-    const dbConnect = dbo.getDb();
-    const listingQuery = { listing_id: req.body.id };
-  
-    dbConnect
-      .collection("listingsAndReviews")
-      .deleteOne(listingQuery, function (err, _result) {
-        if (err) {
-          res.status(400).send(`Error deleting listing with id ${listingQuery.listing_id}!`);
-        } else {
-          console.log("1 document deleted");
-        }
-      });
-  });
+  const dbConnect = dbo.getDb();
+  const listingQuery = { listing_id: req.body.id };
 
-  module.exports = recordRoutes;
+  dbConnect
+    .collection("listingsAndReviews")
+    .deleteOne(listingQuery, function (err, _result) {
+      if (err) {
+        res
+          .status(400)
+          .send(`Error deleting listing with id ${listingQuery.listing_id}!`);
+      } else {
+        console.log("1 document deleted");
+      }
+    });
+});
+
+module.exports = recordRoutes;
